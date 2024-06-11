@@ -1,5 +1,5 @@
 projection;
-//strict ( 2 );
+strict ( 2 );
 
 define behavior for ZATS_CV_AROY_TRAVEL alias Travel
 {
