@@ -67,35 +67,86 @@ CLASS zats_cl_eml_aroy IMPLEMENTATION.
 *    FAILED DATA(lt_fail_assoc)
 *    REPORTED DATA(lt_report_assoc).
 
+*    MODIFY ENTITIES OF zats_cv_aroy_travel
+*    ENTITY Booking
+*    CREATE BY \_BookingSupplement
+*    AUTO FILL CID
+*    SET FIELDS WITH VALUE #(
+*                             ( TravelId = '00005026'
+*                               BookingId = '0001'
+*                               %target = VALUE #( ( BookingSupplementId = '01'
+*                                                    SupplementId = 'ML-0021' ) ) )
+*                             ( TravelId = '00005026'
+*                               BookingId = '0001'
+*                               %target = VALUE #( ( BookingSupplementId = '02'
+*                                                    SupplementId = 'BV-0007' ) ) )
+*                             ( TravelId = '00005026'
+*                               BookingId = '0002'
+*                               %target = VALUE #( ( BookingSupplementId = '01'
+*                                                    SupplementId = 'ML-0021' ) ) )
+*                             ( TravelId = '00005026'
+*                               BookingId = '0002'
+*                               %target = VALUE #( ( BookingSupplementId = '02'
+*                                                    SupplementId = 'BV-0005' ) ) )
+*                             ( TravelId = '00005026'
+*                               BookingId = '0002'
+*                               %target = VALUE #( ( BookingSupplementId = '03'
+*                                                    SupplementId = 'ML-0002' ) ) )
+*                           )
+*    MAPPED DATA(lt_map_assoc)
+*    FAILED DATA(lt_fail_assoc)
+*    REPORTED DATA(lt_report_assoc).
+
+*/--Update BO instances
+*    MODIFY ENTITIES OF zats_cv_aroy_travel
+*    ENTITY Booking
+*    UPDATE
+*    SET FIELDS WITH VALUE #(
+*                             ( TravelId = '00005026'
+*                               BookingId = '0001'
+*                               BookingDate = cl_abap_context_info=>get_system_date( ) + 10
+*                               FlightPrice = '457.80'
+*                               CurrencyCode = 'EUR'
+*                             )
+*                             ( TravelId = '00005026'
+*                               BookingId = '0002'
+*                               BookingDate = cl_abap_context_info=>get_system_date( ) + 30
+*                               FlightPrice = '557.80'
+*                               CurrencyCode = 'USD'
+*                             )
+*                           )
+*    FAILED DATA(lt_fail_upd)
+*    REPORTED DATA(lt_rep_upd).
+
+*/--Read BO instances
+*    READ ENTITIES OF zats_cv_aroy_travel
+*    ENTITY Travel BY \_Booking
+*    ALL FIELDS WITH
+*    VALUE #( ( TravelId = '00005026' ) )
+*    RESULT DATA(lt_result)
+*    FAILED DATA(lt_failed)
+*    REPORTED DATA(lt_reported).
+
+*/--Delete BO instances
+*    MODIFY ENTITIES OF zats_cv_aroy_travel
+*    ENTITY BookingSuppl
+*    DELETE FROM VALUE #( ( TravelId = '00005026'
+*                           BookingId = '0002'
+*                           BookingSupplementId = '03' )
+*                         ( TravelId = '00005026'
+*                           BookingId = '0001'
+*                           BookingSupplementId = '02' )
+*                       )
+*    FAILED DATA(lt_failed)
+*    REPORTED DATA(lt_reported).
+
     MODIFY ENTITIES OF zats_cv_aroy_travel
     ENTITY Booking
-    CREATE BY \_BookingSupplement
-    AUTO FILL CID
-    SET FIELDS WITH VALUE #(
-                             ( TravelId = '00005026'
-                               BookingId = '0001'
-                               %target = VALUE #( ( BookingSupplementId = '01'
-                                                    SupplementId = 'ML-0021' ) ) )
-                             ( TravelId = '00005026'
-                               BookingId = '0001'
-                               %target = VALUE #( ( BookingSupplementId = '02'
-                                                    SupplementId = 'BV-0007' ) ) )
-                             ( TravelId = '00005026'
-                               BookingId = '0002'
-                               %target = VALUE #( ( BookingSupplementId = '01'
-                                                    SupplementId = 'ML-0021' ) ) )
-                             ( TravelId = '00005026'
-                               BookingId = '0002'
-                               %target = VALUE #( ( BookingSupplementId = '02'
-                                                    SupplementId = 'BV-0005' ) ) )
-                             ( TravelId = '00005026'
-                               BookingId = '0002'
-                               %target = VALUE #( ( BookingSupplementId = '03'
-                                                    SupplementId = 'ML-0002' ) ) )
-                           )
-    MAPPED DATA(lt_map_assoc)
-    FAILED DATA(lt_fail_assoc)
-    REPORTED DATA(lt_report_assoc).
+    DELETE FROM VALUE #( ( TravelId = '00005026'
+                           BookingId = '0002' )
+                       )
+    FAILED DATA(lt_failed)
+    REPORTED DATA(lt_reported).
 
 */--Create BO instances (new syntax)
 *    MODIFY ENTITIES OF zats_cv_aroy_travel
@@ -148,21 +199,21 @@ CLASS zats_cl_eml_aroy IMPLEMENTATION.
 
     out->write( '_____________________________________________________________________________________' ).
 
-    out->write(
-      EXPORTING
-        data   = lt_map_assoc-travel
-        name   = 'Mapped'
-    ).
+*    out->write(
+*      EXPORTING
+*        data   = lt_result
+*        name   = 'Result'
+*    ).
 
     out->write(
       EXPORTING
-        data   = lt_report_assoc-travel
+        data   = lt_reported-booking
         name   = 'Reported'
     ).
 
     out->write(
       EXPORTING
-        data   = lt_fail_assoc-travel
+        data   = lt_failed-booking
         name   = 'Failed'
     ).
 
