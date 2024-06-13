@@ -127,6 +127,15 @@ CLASS zats_cl_eml_aroy IMPLEMENTATION.
 *    FAILED DATA(lt_failed)
 *    REPORTED DATA(lt_reported).
 
+    READ ENTITIES OF zats_cv_aroy_travel
+    ENTITY Booking BY \_BookingSupplement
+    ALL FIELDS WITH
+    VALUE #( ( TravelId = '00005026'
+               BookingId = '0001' ) )
+    RESULT DATA(lt_result)
+    FAILED DATA(lt_failed)
+    REPORTED DATA(lt_reported).
+
 */--Delete BO instances
 *    MODIFY ENTITIES OF zats_cv_aroy_travel
 *    ENTITY BookingSuppl
@@ -140,13 +149,13 @@ CLASS zats_cl_eml_aroy IMPLEMENTATION.
 *    FAILED DATA(lt_failed)
 *    REPORTED DATA(lt_reported).
 
-    MODIFY ENTITIES OF zats_cv_aroy_travel
-    ENTITY Booking
-    DELETE FROM VALUE #( ( TravelId = '00005026'
-                           BookingId = '0002' )
-                       )
-    FAILED DATA(lt_failed)
-    REPORTED DATA(lt_reported).
+*    MODIFY ENTITIES OF zats_cv_aroy_travel
+*    ENTITY Booking
+*    DELETE FROM VALUE #( ( TravelId = '00005026'
+*                           BookingId = '0002' )
+*                       )
+*    FAILED DATA(lt_failed)
+*    REPORTED DATA(lt_reported).
 
 */--Create BO instances (new syntax)
 *    MODIFY ENTITIES OF zats_cv_aroy_travel
@@ -199,21 +208,21 @@ CLASS zats_cl_eml_aroy IMPLEMENTATION.
 
     out->write( '_____________________________________________________________________________________' ).
 
-*    out->write(
-*      EXPORTING
-*        data   = lt_result
-*        name   = 'Result'
-*    ).
+    out->write(
+      EXPORTING
+        data   = lt_result
+        name   = 'Result'
+    ).
 
     out->write(
       EXPORTING
-        data   = lt_reported-booking
+        data   = lt_reported-bookingsuppl
         name   = 'Reported'
     ).
 
     out->write(
       EXPORTING
-        data   = lt_failed-booking
+        data   = lt_failed-bookingsuppl
         name   = 'Failed'
     ).
 
@@ -222,7 +231,7 @@ CLASS zats_cl_eml_aroy IMPLEMENTATION.
     FAILED DATA(lt_failed_commit)
     REPORTED DATA(lt_reported_commit).
 
-    out->write( 'Creation done' ).
+*    out->write( 'Creation done' ).
 
   ENDMETHOD.
 ENDCLASS.
