@@ -8,8 +8,17 @@ annotate view ZATS_CV_AROY_BOOKING with
   @UI.facet: [
   {
   purpose: #STANDARD,
+  type: #COLLECTION,
+  position: 10,
+  label: 'Details',
+  id: 'super'
+   },
+  {
+  purpose: #STANDARD,
   type: #IDENTIFICATION_REFERENCE,
-  position: 10
+  position: 10,
+  label: 'More Information',
+  parentId: 'super'
    },
    { purpose: #STANDARD,
    type: #LINEITEM_REFERENCE,
