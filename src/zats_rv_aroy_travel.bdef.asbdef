@@ -1,16 +1,19 @@
-managed implementation in class zbp_ats_rv_aroy_travel unique;
+//managed implementation in class zbp_ats_rv_aroy_travel unique;
+managed;
 strict ( 2 );
 
 define behavior for zats_rv_aroy_travel alias Travel
+implementation in class zbp_ats_aroy_travel unique
 persistent table /dmo/travel_m
 lock master
+early numbering
 authorization master ( instance )
 etag master LastChangedAt
 {
   create;
   update;
   delete;
-//  field ( readonly ) TravelId;
+  //  field ( readonly ) TravelId;
   association _Booking { create; }
 
   mapping for /dmo/travel_m
@@ -33,14 +36,16 @@ etag master LastChangedAt
 }
 
 define behavior for zats_iv_aroy_booking alias Booking
+implementation in class zbp_ats_aroy_booking unique
 persistent table /dmo/booking_m
 lock dependent by _Travel
+early numbering
 authorization dependent by _Travel
 etag master LastChangedAt
 {
   update;
   delete;
-//  field ( readonly ) TravelId, BookingId;
+  //  field ( readonly ) TravelId, BookingId;
   field ( readonly ) TravelId;
   association _Travel;
   association _BookingSupplement { create; }
@@ -62,14 +67,16 @@ etag master LastChangedAt
 }
 
 define behavior for zats_iv_aroy_booking_supl alias BookingSuppl
+implementation in class zbp_ats_aroy_booksupl unique
 persistent table /dmo/booksuppl_m
 lock dependent by _Travel
+early numbering
 authorization dependent by _Travel
 etag master LastChangedAt
 {
   update;
   delete;
-//  field ( readonly ) TravelId, BookingId, BookingSupplementId;
+  //  field ( readonly ) TravelId, BookingId, BookingSupplementId;
   field ( readonly ) TravelId, BookingId;
   association _Travel;
   association _Booking;
