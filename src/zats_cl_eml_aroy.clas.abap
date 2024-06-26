@@ -127,14 +127,14 @@ CLASS zats_cl_eml_aroy IMPLEMENTATION.
 *    FAILED DATA(lt_failed)
 *    REPORTED DATA(lt_reported).
 
-    READ ENTITIES OF zats_cv_aroy_travel
-    ENTITY Booking BY \_BookingSupplement
-    ALL FIELDS WITH
-    VALUE #( ( TravelId = '00005026'
-               BookingId = '0001' ) )
-    RESULT DATA(lt_result)
-    FAILED DATA(lt_failed)
-    REPORTED DATA(lt_reported).
+*    READ ENTITIES OF zats_cv_aroy_travel
+*    ENTITY Booking BY \_BookingSupplement
+*    ALL FIELDS WITH
+*    VALUE #( ( TravelId = '00005026'
+*               BookingId = '0001' ) )
+*    RESULT DATA(lt_result)
+*    FAILED DATA(lt_failed)
+*    REPORTED DATA(lt_reported).
 
 */--Delete BO instances
 *    MODIFY ENTITIES OF zats_cv_aroy_travel
@@ -206,13 +206,52 @@ CLASS zats_cl_eml_aroy IMPLEMENTATION.
 *    FAILED DATA(lt_fail_assoc)
 *    REPORTED DATA(lt_report_assoc).
 
+*/--Create multiple Booking Supplements for a single Booking
+    MODIFY ENTITIES OF zats_cv_aroy_travel
+    ENTITY Booking
+    CREATE BY \_BookingSupplement
+    SET FIELDS WITH VALUE #(
+                             (
+                               travelid = '00004367'
+                               bookingid = '0001'
+                               %target = VALUE #( ( %cid = 'newInstanceBookingSuppl_1'
+                                                    SupplementId = 'ML-0021' )
+                                                  ( %cid = 'newInstanceBookingSuppl_2'
+                                                    SupplementId = 'BV-0005' )
+                                                  ( %cid = 'newInstanceBookingSuppl_3'
+                                                    SupplementId = 'ML-0021' )
+                                                )
+                             )
+*                             (
+*                               travelid = '00004367'
+*                               bookingid = '0001'
+*                               %target = VALUE #( ( %cid = 'newInstanceBookingSuppl_2'
+*                                                    SupplementId = 'BV-0005' ) )
+*                             )
+*                             (
+*                               travelid = '00004367'
+*                               bookingid = '0001'
+*                               %target = VALUE #( ( %cid = 'newInstanceBookingSuppl_3'
+*                                                    SupplementId = 'ML-0002' ) )
+*                             )
+                           )
+    MAPPED DATA(lt_mapped)
+    REPORTED DATA(lt_reported)
+    FAILED DATA(lt_failed).
+
     out->write( '_____________________________________________________________________________________' ).
 
+*    out->write(
+*      EXPORTING
+*        data   = lt_result
+*        name   = 'Result'
+*    ).
+
     out->write(
-      EXPORTING
-        data   = lt_result
-        name   = 'Result'
-    ).
+     EXPORTING
+       data   = lt_mapped-bookingsuppl
+       name   = 'Result'
+   ).
 
     out->write(
       EXPORTING
