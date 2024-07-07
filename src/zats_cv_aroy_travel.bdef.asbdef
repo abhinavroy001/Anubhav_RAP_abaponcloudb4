@@ -8,6 +8,8 @@ define behavior for ZATS_CV_AROY_TRAVEL alias Travel
   use delete;
 
   use association _Booking { create; }
+
+  use action copyTravel;
 }
 
 define behavior for ZATS_CV_AROY_BOOKING alias Booking

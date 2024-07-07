@@ -3,6 +3,8 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR Travel RESULT result.
+    METHODS copytravel FOR MODIFY
+      IMPORTING keys FOR ACTION travel~copytravel.
     METHODS earlynumbering_create FOR NUMBERING
       IMPORTING entities FOR CREATE travel.
 
@@ -104,6 +106,87 @@ CLASS lhc_Travel IMPLEMENTATION.
 
       ENDLOOP.
     ENDLOOP.
+  ENDMETHOD.
+
+  METHOD copyTravel.
+
+    DATA: lt_keys             TYPE TABLE FOR ACTION IMPORT zats_rv_aroy_travel\\travel~copytravel,
+          lt_travel_create    TYPE TABLE FOR CREATE zats_rv_aroy_travel\\Travel,
+          lt_book_create      TYPE TABLE FOR CREATE zats_rv_aroy_travel\\Travel\_Booking,
+          lt_booksuppl_create TYPE TABLE FOR CREATE zats_rv_aroy_travel\\Booking\_BookingSupplement.
+
+    CLEAR: lt_travel_create[],
+           lt_book_create[],
+           lt_booksuppl_create[].
+
+    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    ALL FIELDS WITH
+    VALUE #( FOR <fs_key> IN keys ( TravelId = <fs_key>-TravelId ) )
+    RESULT DATA(lt_result)
+    REPORTED DATA(lt_reported)
+    FAILED DATA(lt_failed).
+
+    IF  lt_result IS NOT INITIAL.
+      READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+      ENTITY Travel
+      BY \_Booking
+      ALL FIELDS WITH
+      VALUE #( FOR <fs_result> IN lt_result ( TravelId = <fs_result>-TravelId ) )
+      RESULT DATA(lt_result_booking)
+      REPORTED DATA(lt_reported_booking)
+      FAILED DATA(lt_failed_booking).
+
+      IF lt_result_booking IS NOT INITIAL.
+        READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+        ENTITY Booking
+        BY \_BookingSupplement
+        ALL FIELDS WITH
+        VALUE #( FOR <fs_booking> IN lt_result_booking ( TravelId = <fs_booking>-TravelId
+                                                         BookingId = <fs_booking>-BookingId ) )
+        RESULT DATA(lt_result_bookingsupl)
+        REPORTED DATA(lt_reported_bookingsupl)
+        FAILED DATA(lt_failed_bookingsupl).
+      ENDIF.
+    ENDIF.
+
+    LOOP AT lt_result ASSIGNING FIELD-SYMBOL(<fs_res>).
+      lt_travel_create = VALUE #( BASE lt_travel_create ( %cid = keys[ TravelId = <fs_res>-TravelId ]-%cid
+                                                          %data = CORRESPONDING #( <fs_res> EXCEPT TravelId ) ) ).
+      LOOP AT lt_result_booking ASSIGNING FIELD-SYMBOL(<fs_res_book>) WHERE TravelId = <fs_res>-TravelId.
+        lt_book_create = VALUE #( BASE lt_book_create ( %cid_ref = keys[ TravelId = <fs_res>-TravelId ]-%cid
+                                                        %target = VALUE #( ( %cid = |{ keys[ TravelId = <fs_res>-TravelId ]-%cid }{ <fs_res_book>-BookingId }|
+                                                                             %data = CORRESPONDING #( <fs_res_book> EXCEPT TravelId
+                                                                                                                           BookingId ) ) ) ) ).
+        LOOP AT lt_result_bookingsupl ASSIGNING FIELD-SYMBOL(<fs_res_booksupl>) WHERE TravelId = <fs_res_book>-TravelId
+                                                                                  AND BookingId = <fs_res_book>-BookingId .
+          lt_booksuppl_create = VALUE #( BASE lt_booksuppl_create ( %cid_ref = |{ keys[ TravelId = <fs_res>-TravelId ]-%cid }{ <fs_res_book>-BookingId }|
+                                                                    %target = VALUE #( ( %cid = |{ keys[ TravelId = <fs_res>-TravelId ]-%cid }{ <fs_res_book>-BookingId }{ <fs_res_booksupl>-BookingSupplementId }|
+                                                                                         %data = CORRESPONDING #( <fs_res_booksupl> EXCEPT TravelId
+                                                                                                                                           BookingId
+                                                                                                                                           BookingSupplementId ) ) ) ) ).
+        ENDLOOP.
+      ENDLOOP.
+    ENDLOOP.
+
+    MODIFY ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    CREATE
+    SET FIELDS WITH
+    CORRESPONDING #( lt_travel_create )
+    CREATE BY \_Booking
+    SET FIELDS WITH
+    CORRESPONDING #( lt_book_create )
+    ENTITY Booking
+    CREATE BY \_BookingSupplement
+    SET FIELDS WITH
+    CORRESPONDING #( lt_booksuppl_create )
+    MAPPED DATA(lt_mapped)
+    REPORTED DATA(lt_rep_create)
+    FAILED DATA(lt_failed_create).
+
+    mapped-travel = lt_mapped-travel.
+
   ENDMETHOD.
 
 ENDCLASS.
