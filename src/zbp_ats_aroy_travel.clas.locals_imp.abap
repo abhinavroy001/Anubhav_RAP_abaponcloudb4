@@ -5,6 +5,8 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys REQUEST requested_authorizations FOR Travel RESULT result.
     METHODS copytravel FOR MODIFY
       IMPORTING keys FOR ACTION travel~copytravel.
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      IMPORTING keys REQUEST requested_features FOR travel RESULT result.
     METHODS earlynumbering_create FOR NUMBERING
       IMPORTING entities FOR CREATE travel.
 
@@ -186,6 +188,32 @@ CLASS lhc_Travel IMPLEMENTATION.
     FAILED DATA(lt_failed_create).
 
     mapped-travel = lt_mapped-travel.
+
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+
+    DATA: lt_output TYPE TABLE FOR INSTANCE FEATURES RESULT zats_rv_aroy_travel\\travel.
+
+    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    FIELDS ( TravelId OverallStatus )
+    WITH
+    CORRESPONDING #( keys )
+    RESULT DATA(lt_result)
+    REPORTED DATA(lt_reported)
+    FAILED DATA(lt_failed).
+
+    IF lt_result IS NOT INITIAL.
+      LOOP AT lt_result ASSIGNING FIELD-SYMBOL(<fs_result>).
+        DATA(lv_allow) = COND #( WHEN <fs_result>-OverallStatus EQ 'X'
+                                 THEN if_abap_behv=>fc-o-disabled
+                                 ELSE if_abap_behv=>fc-o-enabled ).
+        result = VALUE #( BASE result ( %tky = <fs_result>-%tky
+                                        %features-%assoc-_Booking = lv_allow ) ).
+        CLEAR: lv_allow.
+      ENDLOOP.
+    ENDIF.
 
   ENDMETHOD.
 

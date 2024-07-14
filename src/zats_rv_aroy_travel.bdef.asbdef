@@ -14,7 +14,7 @@ etag master LastChangedAt
   update;
   delete;
 
-  association _Booking { create; }
+  association _Booking { create ( features : instance ); }
 
   //static feature control
   field ( readonly ) TravelId, CreatedAt, CreatedBy, LastChangedAt, LastChangedBy;

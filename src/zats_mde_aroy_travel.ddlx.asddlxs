@@ -102,6 +102,10 @@ annotate view ZATS_CV_AROY_TRAVEL with
   @UI.lineItem: [{ position: 120, criticality: 'Criticality', importance: #HIGH}]
   @UI.dataPoint:{qualifier: 'status_data', title: 'Status', criticality: 'Criticality'}
   OverallStatus;
+  @UI.hidden: true
+  StatusText;
+  @UI.hidden: true
+  Criticality;
   @UI.fieldGroup: [{ qualifier: 'admin', label: 'Created By', position: 10 }]
   CreatedBy;
   @UI.fieldGroup: [{ qualifier: 'admin', label: 'Created On', position: 20 }]
