@@ -12,6 +12,8 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS calculatetotalprice FOR DETERMINE ON MODIFY
       IMPORTING keys FOR travel~calculatetotalprice.
+    METHODS validateheaderdata FOR VALIDATE ON SAVE
+      IMPORTING keys FOR travel~validateheaderdata.
     METHODS earlynumbering_create FOR NUMBERING
       IMPORTING entities FOR CREATE travel.
 
@@ -320,6 +322,13 @@ CLASS lhc_Travel IMPLEMENTATION.
     MAPPED DATA(lt_mapped)
     REPORTED DATA(lt_repo)
     FAILED DATA(lt_failed).
+
+  ENDMETHOD.
+
+  METHOD validateHeaderData.
+
+    DATA: lt_keys TYPE TABLE FOR VALIDATION zats_rv_aroy_travel\\travel~validateheaderdata.
+    CLEAR: lt_keys.
 
   ENDMETHOD.
 

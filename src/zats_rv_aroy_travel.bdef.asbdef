@@ -26,6 +26,8 @@ etag master LastChangedAt
 
   determination calculateTotalPrice on modify { create; field BookingFee, CurrencyCode; }
 
+  validation validateHeaderData on save { create; field CustomerId, BeginDate, EndDate; }
+
   mapping for /dmo/travel_m
     {
       TravelId      = travel_id;
