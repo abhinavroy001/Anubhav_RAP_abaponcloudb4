@@ -17,10 +17,14 @@ etag master LastChangedAt
   association _Booking { create ( features : instance ); }
 
   //static feature control
-  field ( readonly ) TravelId, CreatedAt, CreatedBy, LastChangedAt, LastChangedBy;
+  field ( readonly ) TravelId, CreatedAt, CreatedBy, LastChangedAt, LastChangedBy, TotalPrice;
   field ( mandatory ) AgencyId, CustomerId, BeginDate, CurrencyCode, OverallStatus, EndDate;
 
   factory action copyTravel [1];
+
+  internal action reCalcTotalPrice;
+
+  determination calculateTotalPrice on modify { create; field BookingFee, CurrencyCode; }
 
   mapping for /dmo/travel_m
     {

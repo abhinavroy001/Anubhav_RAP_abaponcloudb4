@@ -7,6 +7,11 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR ACTION travel~copytravel.
     METHODS get_instance_features FOR INSTANCE FEATURES
       IMPORTING keys REQUEST requested_features FOR travel RESULT result.
+    METHODS recalctotalprice FOR MODIFY
+      IMPORTING keys FOR ACTION travel~recalctotalprice.
+
+    METHODS calculatetotalprice FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR travel~calculatetotalprice.
     METHODS earlynumbering_create FOR NUMBERING
       IMPORTING entities FOR CREATE travel.
 
@@ -214,6 +219,107 @@ CLASS lhc_Travel IMPLEMENTATION.
         CLEAR: lv_allow.
       ENDLOOP.
     ENDIF.
+
+  ENDMETHOD.
+
+  METHOD reCalcTotalPrice.
+
+    DATA: lt_keys TYPE TABLE FOR ACTION IMPORT zats_rv_aroy_travel\\travel~recalctotalprice.
+
+    CLEAR: lt_keys[].
+
+    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    FIELDS ( BookingFee CurrencyCode )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_travel)
+    REPORTED DATA(lt_repo_travel)
+    FAILED DATA(lt_failed_travel).
+
+    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    BY \_Booking
+    FIELDS ( FlightPrice CurrencyCode )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_booking)
+    REPORTED DATA(lt_repo_book)
+    FAILED DATA(lt_failed_book).
+
+    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Booking
+    BY \_BookingSupplement
+    FIELDS ( Price CurrencyCode )
+    WITH CORRESPONDING #( lt_booking )
+    RESULT DATA(lt_bookspl)
+    REPORTED DATA(lt_repo_bookspl)
+    FAILED DATA(lt_failed_bookspl).
+
+    LOOP AT lt_travel ASSIGNING FIELD-SYMBOL(<fs_travel>).
+
+      <fs_travel>-TotalPrice += <fs_travel>-BookingFee.
+
+      LOOP AT lt_booking ASSIGNING FIELD-SYMBOL(<fs_booking>) WHERE TravelId = <fs_travel>-TravelId.
+
+        IF <fs_booking>-CurrencyCode NE <fs_travel>-CurrencyCode.
+          /dmo/cl_flight_amdp=>convert_currency(
+            EXPORTING
+              iv_amount               = <fs_booking>-FlightPrice
+              iv_currency_code_source = <fs_booking>-CurrencyCode
+              iv_currency_code_target = <fs_travel>-CurrencyCode
+              iv_exchange_rate_date   = cl_abap_context_info=>get_system_date( )
+            IMPORTING
+              ev_amount               = DATA(lv_amount)
+          ).
+          <fs_travel>-TotalPrice += lv_amount.
+          CLEAR: lv_amount.
+        ELSE.
+          <fs_travel>-TotalPrice += <fs_booking>-FlightPrice.
+        ENDIF.
+
+        LOOP AT lt_bookspl ASSIGNING FIELD-SYMBOL(<fs_bookspl>) WHERE TravelId = <fs_booking>-TravelId
+                                                                  AND BookingId = <fs_booking>-BookingId.
+
+          IF <fs_bookspl>-CurrencyCode NE <fs_travel>-CurrencyCode.
+            CLEAR: lv_amount.
+            /dmo/cl_flight_amdp=>convert_currency(
+              EXPORTING
+                iv_amount               = <fs_bookspl>-Price
+                iv_currency_code_source = <fs_bookspl>-CurrencyCode
+                iv_currency_code_target = <fs_travel>-CurrencyCode
+                iv_exchange_rate_date   = cl_abap_context_info=>get_system_date( )
+              IMPORTING
+                ev_amount               = lv_amount
+            ).
+            <fs_travel>-TotalPrice += lv_amount.
+          ELSE.
+            <fs_travel>-TotalPrice += <fs_bookspl>-Price.
+          ENDIF.
+
+        ENDLOOP.
+      ENDLOOP.
+    ENDLOOP.
+
+    MODIFY ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    UPDATE
+    FIELDS ( TotalPrice )
+    WITH CORRESPONDING #( lt_travel )
+    MAPPED DATA(lt_mapped).
+
+  ENDMETHOD.
+
+  METHOD calculateTotalPrice.
+
+    DATA: lt_calc TYPE TABLE FOR DETERMINATION zats_rv_aroy_travel\\travel~calculatetotalprice.
+    CLEAR: lt_calc[].
+
+    MODIFY ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    EXECUTE reCalcTotalPrice
+    FROM CORRESPONDING #( keys )
+    MAPPED DATA(lt_mapped)
+    REPORTED DATA(lt_repo)
+    FAILED DATA(lt_failed).
 
   ENDMETHOD.
 
