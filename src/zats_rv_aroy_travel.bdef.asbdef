@@ -13,10 +13,14 @@ etag master LastChangedAt
   create;
   update;
   delete;
-  //  field ( readonly ) TravelId;
+
   association _Booking { create; }
 
-  factory action copyTravel[1];
+  //static feature control
+  field ( readonly ) TravelId, CreatedAt, CreatedBy, LastChangedAt, LastChangedBy;
+  field ( mandatory ) AgencyId, CustomerId, BeginDate, CurrencyCode, OverallStatus, EndDate;
+
+  factory action copyTravel [1];
 
   mapping for /dmo/travel_m
     {
@@ -47,10 +51,12 @@ etag master LastChangedAt
 {
   update;
   delete;
-  //  field ( readonly ) TravelId, BookingId;
-  field ( readonly ) TravelId;
   association _Travel;
   association _BookingSupplement { create; }
+
+  //Static feature control
+  field ( readonly ) TravelId, BookingId, LastChangedAt;
+  field ( mandatory ) CarrierId, ConnectionId, FlightDate, CurrencyCode, CustomerId;
 
   mapping for /dmo/booking_m
     {
@@ -78,10 +84,12 @@ etag master LastChangedAt
 {
   update;
   delete;
-  //  field ( readonly ) TravelId, BookingId, BookingSupplementId;
-  field ( readonly ) TravelId, BookingId;
   association _Travel;
   association _Booking;
+
+  //Static Feature Control
+  field ( readonly ) TravelId, BookingId, BookingSupplementId, LastChangedAt;
+  field ( mandatory ) CurrencyCode, Price, SupplementId;
 
   mapping for /dmo/booksuppl_m
     {
