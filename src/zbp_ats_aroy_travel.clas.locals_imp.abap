@@ -327,8 +327,73 @@ CLASS lhc_Travel IMPLEMENTATION.
 
   METHOD validateHeaderData.
 
-    DATA: lt_keys TYPE TABLE FOR VALIDATION zats_rv_aroy_travel\\travel~validateheaderdata.
-    CLEAR: lt_keys.
+    TYPES: BEGIN OF ty_customerId,
+             customer_id TYPE /dmo/customer_id,
+           END OF ty_customerid.
+    DATA: lt_keys      TYPE TABLE FOR VALIDATION zats_rv_aroy_travel\\travel~validateheaderdata,
+          lt_customers TYPE STANDARD TABLE OF ty_customerId WITH DEFAULT KEY.
+
+    CLEAR: lt_keys[],
+           lt_customers[].
+
+    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    FIELDS ( CustomerId BeginDate EndDate )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_travel).
+
+    IF lt_travel IS NOT INITIAL.
+
+      lt_customers = CORRESPONDING #( lt_travel MAPPING customer_id = CustomerId ).
+      DELETE lt_customers WHERE customer_id IS INITIAL.
+      SORT lt_customers BY customer_id.
+      DELETE ADJACENT DUPLICATES FROM lt_customers COMPARING customer_id.
+
+      IF lt_customers IS NOT INITIAL.
+        SELECT
+        FROM /dmo/customer AS _cust
+        INNER JOIN @lt_customers AS _customer
+        ON _cust~customer_id = _customer~customer_id
+        FIELDS
+        _cust~customer_id
+        INTO TABLE @DATA(lt_cust_db).
+        IF sy-subrc IS INITIAL.
+        ENDIF.
+      ENDIF.
+
+      LOOP AT lt_travel ASSIGNING FIELD-SYMBOL(<fs_travel>).
+        IF <fs_travel>-CustomerId IS INITIAL OR
+               NOT line_exists( lt_cust_db[ customer_id = <fs_travel>-CustomerId ] ).
+
+          reported-travel = VALUE #( BASE reported-travel (  TravelId = <fs_travel>-TravelId
+                                                             %element-customerid = if_abap_behv=>mk-on
+                                                             %msg = new_message_with_text(
+                                                                     severity = if_abap_behv_message=>severity-error
+                                                                     text     = 'Enter a valid Customer ID'
+                                                                   ) ) ).
+          failed-travel = VALUE #( BASE failed-travel ( TravelId = <fs_travel>-TravelId
+                                                        %fail =  VALUE #( cause = if_abap_behv=>cause-not_found )  ) ).
+        ELSEIF <fs_travel>-EndDate LT <fs_travel>-BeginDate.
+          reported-travel = VALUE #( BASE reported-travel (  TravelId = <fs_travel>-TravelId
+                                                             %element-enddate = if_abap_behv=>mk-on
+                                                             %msg = new_message_with_text(
+                                                                     severity = if_abap_behv_message=>severity-error
+                                                                     text     = 'The End Date cannot be less than the Begin Date'
+                                                                   ) ) ).
+          failed-travel = VALUE #( BASE failed-travel ( TravelId = <fs_travel>-TravelId
+                                                        %fail =  VALUE #( cause = if_abap_behv=>cause-conflict )  ) ).
+        ELSEIF <fs_travel>-BeginDate LT cl_abap_context_info=>get_system_date( ).
+          reported-travel = VALUE #( BASE reported-travel (  TravelId = <fs_travel>-TravelId
+                                                             %element-begindate = if_abap_behv=>mk-on
+                                                               %msg = new_message_with_text(
+                                                                       severity = if_abap_behv_message=>severity-error
+                                                                       text     = |The Begin Date can't be in the past|
+                                                                     ) ) ).
+          failed-travel = VALUE #( BASE failed-travel ( TravelId = <fs_travel>-TravelId
+                                                        %fail =  VALUE #( cause = if_abap_behv=>cause-conflict )  ) ).
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
 
   ENDMETHOD.
 
