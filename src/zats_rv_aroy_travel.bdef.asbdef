@@ -1,5 +1,5 @@
 //managed implementation in class zbp_ats_rv_aroy_travel unique;
-managed;
+managed implementation in class zbp_ats_aroy_travel unique;
 strict ( 2 );
 
 define behavior for zats_rv_aroy_travel alias Travel
@@ -8,6 +8,7 @@ persistent table /dmo/travel_m
 lock master
 early numbering
 authorization master ( instance )
+with additional save
 etag master LastChangedAt
 {
   create;
