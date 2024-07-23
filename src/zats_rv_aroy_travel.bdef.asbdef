@@ -29,6 +29,12 @@ etag master LastChangedAt
 
   validation validateHeaderData on save { create; field CustomerId, BeginDate, EndDate; }
 
+  side effects
+  {
+    field BookingFee affects field TotalPrice;
+    field CurrencyCode affects field TotalPrice;
+  }
+
   mapping for /dmo/travel_m
     {
       TravelId      = travel_id;

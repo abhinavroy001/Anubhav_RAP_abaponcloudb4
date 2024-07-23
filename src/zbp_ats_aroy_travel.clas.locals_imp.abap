@@ -9,6 +9,18 @@ ENDCLASS.
 CLASS lsc_zats_rv_aroy_travel IMPLEMENTATION.
 
   METHOD save_modified.
+    IF create-travel IS NOT INITIAL.
+      TRY.
+          MODIFY /dmo/log_travel FROM TABLE @( VALUE #( ( change_id = cl_uuid_factory=>create_system_uuid( )->create_uuid_x16( )
+                                                          travel_id = create-travel[ 1 ]-TravelId
+                                                          changing_operation = 'CREATE'
+                                                          changed_field_name = 'ALL'
+                                                          changed_value = '*'
+                                                          created_at = cl_abap_tstmp=>utclong2tstmp( utclong = utclong_current( ) ) ) ) ).
+        CATCH cx_uuid_error INTO DATA(lo_cx).
+      ENDTRY.
+
+    ENDIF.
   ENDMETHOD.
 
 ENDCLASS.
