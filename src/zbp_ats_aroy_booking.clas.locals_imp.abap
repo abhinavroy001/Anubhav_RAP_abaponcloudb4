@@ -50,7 +50,28 @@ CLASS lhc_booking IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD calculateTotalPrice.
-    DATA(lv_flag) = abap_true.
+    TYPES: BEGIN OF ty_travelid,
+             travelid TYPE /dmo/travel_id,
+           END OF ty_travelid,
+           tt_travelid TYPE STANDARD TABLE OF ty_travelid  WITH DEFAULT KEY.
+    DATA: lt_keys     TYPE TABLE FOR DETERMINATION zats_rv_aroy_travel\\booking~calculatetotalprice,
+          lt_travelid TYPE tt_travelid.
+
+    CLEAR: lt_keys[],
+           lt_travelid[].
+
+    lt_travelid = CORRESPONDING #( keys MAPPING travelid = travelid ).
+    IF lt_travelid IS NOT INITIAL.
+      SORT lt_travelid BY travelid.
+      DELETE ADJACENT DUPLICATES FROM lt_travelid COMPARING travelid.
+    ENDIF.
+
+    MODIFY ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    EXECUTE reCalcTotalPrice
+    FROM CORRESPONDING #( lt_travelid )
+    MAPPED DATA(lt_mapped).
+
   ENDMETHOD.
 
 ENDCLASS.
