@@ -69,7 +69,9 @@ etag master LastChangedAt
 
   //Static feature control
   field ( readonly ) TravelId, BookingId, LastChangedAt;
-  field ( mandatory ) CarrierId, ConnectionId, FlightDate, CurrencyCode, CustomerId;
+  field ( mandatory ) CarrierId, ConnectionId, FlightDate, FlightPrice, CurrencyCode, CustomerId;
+
+  determination calculateTotalPrice on modify { field FlightPrice, CurrencyCode; }
 
   mapping for /dmo/booking_m
     {

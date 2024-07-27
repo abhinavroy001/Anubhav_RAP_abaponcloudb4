@@ -4,6 +4,8 @@ CLASS lhc_booking DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS earlynumbering_cba_Bookingsupp FOR NUMBERING
       IMPORTING entities FOR CREATE Booking\_Bookingsupplement.
+    METHODS calculateTotalPrice FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR Booking~calculateTotalPrice.
 
 ENDCLASS.
 
@@ -45,6 +47,10 @@ CLASS lhc_booking IMPLEMENTATION.
 
     ENDLOOP.
 
+  ENDMETHOD.
+
+  METHOD calculateTotalPrice.
+    DATA(lv_flag) = abap_true.
   ENDMETHOD.
 
 ENDCLASS.
