@@ -1,13 +1,19 @@
 projection;
 strict ( 2 );
-
+use draft;
 define behavior for ZATS_CV_AROY_TRAVEL alias Travel
 {
   use create;
   use update;
   use delete;
 
-  use association _Booking { create; }
+  use action Edit;
+  use action Resume;
+  use action Discard;
+  use action Activate;
+  use action Prepare;
+
+  use association _Booking { create; with draft; }
 
   use action copyTravel;
 }
@@ -17,8 +23,8 @@ define behavior for ZATS_CV_AROY_BOOKING alias Booking
   use update;
   use delete;
 
-  use association _Travel;
-  use association _BookingSupplement { create; }
+  use association _Travel { with draft; }
+  use association _BookingSupplement { create; with draft; }
 }
 
 define behavior for ZATS_CV_AROY_BOOKING_SUPL alias BookingSuppl
@@ -26,6 +32,6 @@ define behavior for ZATS_CV_AROY_BOOKING_SUPL alias BookingSuppl
   use update;
   use delete;
 
-  use association _Travel;
-  use association _Booking;
+  use association _Travel { with draft; }
+  use association _Booking { with draft; }
 }

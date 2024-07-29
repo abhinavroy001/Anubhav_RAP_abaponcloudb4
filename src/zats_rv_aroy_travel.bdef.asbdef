@@ -1,11 +1,13 @@
 //managed implementation in class zbp_ats_rv_aroy_travel unique;
 managed implementation in class zbp_ats_aroy_travel unique;
 strict ( 2 );
-
+with draft;
 define behavior for zats_rv_aroy_travel alias Travel
 implementation in class zbp_ats_aroy_travel unique
 persistent table /dmo/travel_m
+draft table zats_d_ar_travel
 lock master
+total etag LastChangedAt
 early numbering
 authorization master ( instance )
 with additional save
@@ -15,7 +17,7 @@ etag master LastChangedAt
   update;
   delete;
 
-  association _Booking { create ( features : instance ); }
+  association _Booking { create ( features : instance ); with draft; }
 
   //static feature control
   field ( readonly ) TravelId, CreatedAt, CreatedBy, LastChangedAt, LastChangedBy, TotalPrice;
@@ -34,6 +36,13 @@ etag master LastChangedAt
     field BookingFee affects field TotalPrice;
     field CurrencyCode affects field TotalPrice;
   }
+
+  //draft actions
+  draft action Edit;
+  draft action Resume;
+  draft action Discard;
+  draft action Activate optimized;
+  draft determine action Prepare;
 
   mapping for /dmo/travel_m
     {
@@ -57,6 +66,7 @@ etag master LastChangedAt
 define behavior for zats_iv_aroy_booking alias Booking
 implementation in class zbp_ats_aroy_booking unique
 persistent table /dmo/booking_m
+draft table zats_d_ar_book
 lock dependent by _Travel
 early numbering
 authorization dependent by _Travel
@@ -64,14 +74,16 @@ etag master LastChangedAt
 {
   update;
   delete;
-  association _Travel;
-  association _BookingSupplement { create; }
+  association _Travel { with draft; }
+  association _BookingSupplement { create; with draft; }
 
   //Static feature control
   field ( readonly ) TravelId, BookingId, LastChangedAt;
   field ( mandatory ) CarrierId, ConnectionId, FlightDate, FlightPrice, CurrencyCode, CustomerId;
 
   determination calculateTotalPrice on modify { field FlightPrice, CurrencyCode; }
+
+  side effects { field FlightPrice affects field _Travel.TotalPrice; }
 
   mapping for /dmo/booking_m
     {
@@ -92,6 +104,7 @@ etag master LastChangedAt
 define behavior for zats_iv_aroy_booking_supl alias BookingSuppl
 implementation in class zbp_ats_aroy_booksupl unique
 persistent table /dmo/booksuppl_m
+draft table zats_d_ar_bksp
 lock dependent by _Travel
 early numbering
 authorization dependent by _Travel
@@ -99,8 +112,8 @@ etag master LastChangedAt
 {
   update;
   delete;
-  association _Travel;
-  association _Booking;
+  association _Travel { with draft; }
+  association _Booking { with draft; }
 
   //Static Feature Control
   field ( readonly ) TravelId, BookingId, BookingSupplementId, LastChangedAt;

@@ -9,18 +9,18 @@ ENDCLASS.
 CLASS lsc_zats_rv_aroy_travel IMPLEMENTATION.
 
   METHOD save_modified.
-    IF create-travel IS NOT INITIAL.
-      TRY.
-          MODIFY /dmo/log_travel FROM TABLE @( VALUE #( ( change_id = cl_uuid_factory=>create_system_uuid( )->create_uuid_x16( )
-                                                          travel_id = create-travel[ 1 ]-TravelId
-                                                          changing_operation = 'CREATE'
-                                                          changed_field_name = 'ALL'
-                                                          changed_value = '*'
-                                                          created_at = cl_abap_tstmp=>utclong2tstmp( utclong = utclong_current( ) ) ) ) ).
-        CATCH cx_uuid_error INTO DATA(lo_cx).
-      ENDTRY.
-
-    ENDIF.
+*    IF create-travel IS NOT INITIAL.
+*      TRY.
+*          MODIFY /dmo/log_travel FROM TABLE @( VALUE #( ( change_id = cl_uuid_factory=>create_system_uuid( )->create_uuid_x16( )
+*                                                          travel_id = create-travel[ 1 ]-TravelId
+*                                                          changing_operation = 'CREATE'
+*                                                          changed_field_name = 'ALL'
+*                                                          changed_value = '*'
+*                                                          created_at = cl_abap_tstmp=>utclong2tstmp( utclong = utclong_current( ) ) ) ) ).
+*        CATCH cx_uuid_error INTO DATA(lo_cx).
+*      ENDTRY.
+*
+*    ENDIF.
   ENDMETHOD.
 
 ENDCLASS.
@@ -52,6 +52,37 @@ ENDCLASS.
 CLASS lhc_Travel IMPLEMENTATION.
 
   METHOD get_instance_authorizations.
+
+    DATA: lt_keys     TYPE TABLE FOR AUTHORIZATION KEY zats_rv_aroy_travel\\travel,
+          lt_req_auth TYPE STRUCTURE FOR AUTHORIZATION REQUEST zats_rv_aroy_travel\\travel,
+          lt_res_auth TYPE TABLE FOR AUTHORIZATION RESULT zats_rv_aroy_travel\\travel.
+
+    CLEAR: lt_keys[],
+           lt_res_auth[],
+           lt_req_auth.
+
+*/--Get the requisite data from the instance
+    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    FIELDS ( OverallStatus )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result)
+    REPORTED DATA(lt_reported)
+    FAILED DATA(lt_failed).
+
+    LOOP AT lt_result ASSIGNING FIELD-SYMBOL(<fs_result>).
+      IF <fs_result>-OverallStatus EQ 'X'.
+        lt_res_auth = VALUE #( BASE lt_res_auth ( TravelId = <fs_result>-TravelId
+                                                  %update = if_abap_behv=>auth-unauthorized
+                                                  %action-copyTravel = if_abap_behv=>auth-unauthorized ) ).
+      ELSE.
+        lt_res_auth = VALUE #( BASE lt_res_auth ( TravelId = <fs_result>-TravelId
+                                                  %update = if_abap_behv=>auth-allowed
+                                                  %action-copyTravel = if_abap_behv=>auth-allowed ) ).
+      ENDIF.
+    ENDLOOP.
+
+    result = lt_res_auth.
   ENDMETHOD.
 
   METHOD earlynumbering_create.
@@ -80,8 +111,10 @@ CLASS lhc_Travel IMPLEMENTATION.
         LOOP AT lt_entities ASSIGNING FIELD-SYMBOL(<fs_ent>).
           reported-travel = VALUE #( BASE reported-travel ( %cid = <fs_ent>-%cid
                                                             %key = <fs_ent>-%key
+                                                            %is_draft = <fs_ent>-%is_draft
                                                             %msg = lo_cx ) ).
           failed-travel = VALUE #( BASE failed-travel ( %cid = <fs_ent>-%cid
+                                                        %is_draft = <fs_ent>-%is_draft
                                                         %key = <fs_ent>-%key ) ).
         ENDLOOP.
         EXIT.
@@ -93,6 +126,7 @@ CLASS lhc_Travel IMPLEMENTATION.
         lv_travel_id += 1.
         mapped-travel = VALUE #( BASE mapped-travel ( %cid = <fs_ent>-%cid
                                                       %key = <fs_ent>-%key
+                                                      %is_draft = <fs_ent>-%is_draft
                                                       TravelId = lv_travel_id ) ).
       ENDLOOP.
     ENDIF.
@@ -135,6 +169,7 @@ CLASS lhc_Travel IMPLEMENTATION.
           LOOP AT <fs_travel>-%target ASSIGNING FIELD-SYMBOL(<fs_book>).
             lv_booking_id += 1.
             mapped-booking = VALUE #( BASE mapped-booking ( %cid = <fs_book>-%cid
+                                                            %is_draft = <fs_book>-%is_draft
                                                             TravelId = <fs_book>-TravelId
                                                             BookingId = lv_booking_id ) ).
           ENDLOOP.
@@ -244,6 +279,7 @@ CLASS lhc_Travel IMPLEMENTATION.
                                  THEN if_abap_behv=>fc-o-disabled
                                  ELSE if_abap_behv=>fc-o-enabled ).
         result = VALUE #( BASE result ( %tky = <fs_result>-%tky
+                                        %is_draft = <fs_result>-%is_draft
                                         %features-%assoc-_Booking = lv_allow ) ).
         CLEAR: lv_allow.
       ENDLOOP.
