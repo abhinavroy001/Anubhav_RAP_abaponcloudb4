@@ -54,6 +54,7 @@ CLASS lhc_booking IMPLEMENTATION.
   METHOD calculateTotalPrice.
     TYPES: BEGIN OF ty_travelid,
              travelid TYPE /dmo/travel_id,
+             is_draft TYPE abp_behv_flag,
            END OF ty_travelid,
            tt_travelid TYPE STANDARD TABLE OF ty_travelid  WITH DEFAULT KEY.
     DATA: lt_keys     TYPE TABLE FOR DETERMINATION zats_rv_aroy_travel\\booking~calculatetotalprice,
@@ -62,7 +63,8 @@ CLASS lhc_booking IMPLEMENTATION.
     CLEAR: lt_keys[],
            lt_travelid[].
 
-    lt_travelid = CORRESPONDING #( keys MAPPING travelid = travelid ).
+    lt_travelid = CORRESPONDING #( keys MAPPING travelid = travelid
+                                                is_draft = %is_draft ).
     IF lt_travelid IS NOT INITIAL.
       SORT lt_travelid BY travelid.
       DELETE ADJACENT DUPLICATES FROM lt_travelid COMPARING travelid.
@@ -71,7 +73,8 @@ CLASS lhc_booking IMPLEMENTATION.
     MODIFY ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
     ENTITY Travel
     EXECUTE reCalcTotalPrice
-    FROM CORRESPONDING #( lt_travelid )
+    FROM CORRESPONDING #( lt_travelid MAPPING TravelId = travelid
+                                              %is_draft = is_draft )
     MAPPED DATA(lt_mapped).
 
   ENDMETHOD.
