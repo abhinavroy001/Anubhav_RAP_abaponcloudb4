@@ -73,10 +73,12 @@ CLASS lhc_Travel IMPLEMENTATION.
     LOOP AT lt_result ASSIGNING FIELD-SYMBOL(<fs_result>).
       IF <fs_result>-OverallStatus EQ 'X'.
         lt_res_auth = VALUE #( BASE lt_res_auth ( TravelId = <fs_result>-TravelId
+                                                  %is_draft = <fs_result>-%is_draft
                                                   %update = if_abap_behv=>auth-unauthorized
                                                   %action-copyTravel = if_abap_behv=>auth-unauthorized ) ).
       ELSE.
         lt_res_auth = VALUE #( BASE lt_res_auth ( TravelId = <fs_result>-TravelId
+                                                  %is_draft = <fs_result>-%is_draft
                                                   %update = if_abap_behv=>auth-allowed
                                                   %action-copyTravel = if_abap_behv=>auth-allowed ) ).
       ENDIF.
@@ -96,39 +98,43 @@ CLASS lhc_Travel IMPLEMENTATION.
                            WHERE ( TravelId IS INITIAL )
                            ( <fs_entity> ) ).
 
-    TRY.
-        cl_numberrange_runtime=>number_get(
-      EXPORTING
-        nr_range_nr       = '01'
-        object            = '/DMO/TRAVL'
-        quantity          = CONV #( lines( lt_entities ) )
-      IMPORTING
-        number            = DATA(lv_number)
-        returncode        = DATA(lv_returncode)
-        returned_quantity = DATA(lv_ret_quan)
-    ).
-      CATCH cx_number_ranges INTO DATA(lo_cx).
-        LOOP AT lt_entities ASSIGNING FIELD-SYMBOL(<fs_ent>).
-          reported-travel = VALUE #( BASE reported-travel ( %cid = <fs_ent>-%cid
-                                                            %key = <fs_ent>-%key
-                                                            %is_draft = <fs_ent>-%is_draft
-                                                            %msg = lo_cx ) ).
-          failed-travel = VALUE #( BASE failed-travel ( %cid = <fs_ent>-%cid
-                                                        %is_draft = <fs_ent>-%is_draft
-                                                        %key = <fs_ent>-%key ) ).
-        ENDLOOP.
-        EXIT.
-    ENDTRY.
+    IF lt_entities IS NOT INITIAL.
+      TRY.
+          cl_numberrange_runtime=>number_get(
+        EXPORTING
+          nr_range_nr       = '01'
+          object            = '/DMO/TRAVL'
+          quantity          = CONV #( lines( lt_entities ) )
+        IMPORTING
+          number            = DATA(lv_number)
+          returncode        = DATA(lv_returncode)
+          returned_quantity = DATA(lv_ret_quan)
+      ).
+        CATCH cx_number_ranges INTO DATA(lo_cx).
+          LOOP AT lt_entities ASSIGNING FIELD-SYMBOL(<fs_ent>).
+            reported-travel = VALUE #( BASE reported-travel ( %cid = <fs_ent>-%cid
+                                                              %key = <fs_ent>-%key
+                                                              %is_draft = <fs_ent>-%is_draft
+                                                              %msg = lo_cx ) ).
+            failed-travel = VALUE #( BASE failed-travel ( %cid = <fs_ent>-%cid
+                                                          %is_draft = <fs_ent>-%is_draft
+                                                          %key = <fs_ent>-%key ) ).
+          ENDLOOP.
+          EXIT.
+      ENDTRY.
 
-    IF lv_returncode NE '3'.
-      lv_travel_id = lv_number - lv_ret_quan.
-      LOOP AT lt_entities ASSIGNING <fs_ent>.
-        lv_travel_id += 1.
-        mapped-travel = VALUE #( BASE mapped-travel ( %cid = <fs_ent>-%cid
-                                                      %key = <fs_ent>-%key
-                                                      %is_draft = <fs_ent>-%is_draft
-                                                      TravelId = lv_travel_id ) ).
-      ENDLOOP.
+      IF lv_returncode NE '3'.
+        lv_travel_id = lv_number - lv_ret_quan.
+        LOOP AT lt_entities ASSIGNING <fs_ent>.
+          lv_travel_id += 1.
+          mapped-travel = VALUE #( BASE mapped-travel ( %cid = <fs_ent>-%cid
+                                                        %key = <fs_ent>-%key
+                                                        %is_draft = <fs_ent>-%is_draft
+                                                        TravelId = lv_travel_id ) ).
+        ENDLOOP.
+      ENDIF.
+    ELSE.
+      mapped-travel = CORRESPONDING #( entities ).
     ENDIF.
 
   ENDMETHOD.
@@ -150,7 +156,8 @@ CLASS lhc_Travel IMPLEMENTATION.
         ENTITY Travel
         BY \_Booking
         ALL FIELDS WITH
-        VALUE #( FOR <fs_entity> IN lt_entities ( TravelId = <fs_entity>-TravelId ) )
+        VALUE #( FOR <fs_entity> IN lt_entities ( TravelId = <fs_entity>-TravelId
+                                                  %is_draft = <fs_entity>-%is_draft ) )
         RESULT DATA(lt_result)
         FAILED DATA(lt_failed)
         REPORTED DATA(lt_reported).
@@ -223,6 +230,7 @@ CLASS lhc_Travel IMPLEMENTATION.
 
     LOOP AT lt_result ASSIGNING FIELD-SYMBOL(<fs_res>).
       lt_travel_create = VALUE #( BASE lt_travel_create ( %cid = keys[ TravelId = <fs_res>-TravelId ]-%cid
+
                                                           %data = CORRESPONDING #( <fs_res> EXCEPT TravelId ) ) ).
       LOOP AT lt_result_booking ASSIGNING FIELD-SYMBOL(<fs_res_book>) WHERE TravelId = <fs_res>-TravelId.
         lt_book_create = VALUE #( BASE lt_book_create ( %cid_ref = keys[ TravelId = <fs_res>-TravelId ]-%cid
@@ -323,7 +331,8 @@ CLASS lhc_Travel IMPLEMENTATION.
 
       <fs_travel>-TotalPrice += <fs_travel>-BookingFee.
 
-      LOOP AT lt_booking ASSIGNING FIELD-SYMBOL(<fs_booking>) WHERE TravelId = <fs_travel>-TravelId.
+      LOOP AT lt_booking ASSIGNING FIELD-SYMBOL(<fs_booking>) WHERE TravelId = <fs_travel>-TravelId AND
+                                                                    %is_draft = <fs_travel>-%is_draft.
 
         IF <fs_booking>-CurrencyCode NE <fs_travel>-CurrencyCode.
           /dmo/cl_flight_amdp=>convert_currency(
@@ -342,7 +351,8 @@ CLASS lhc_Travel IMPLEMENTATION.
         ENDIF.
 
         LOOP AT lt_bookspl ASSIGNING FIELD-SYMBOL(<fs_bookspl>) WHERE TravelId = <fs_booking>-TravelId
-                                                                  AND BookingId = <fs_booking>-BookingId.
+                                                                  AND BookingId = <fs_booking>-BookingId
+                                                                  AND %is_draft = <fs_booking>-%is_draft.
 
           IF <fs_bookspl>-CurrencyCode NE <fs_travel>-CurrencyCode.
             CLEAR: lv_amount.
@@ -430,29 +440,35 @@ CLASS lhc_Travel IMPLEMENTATION.
 
           reported-travel = VALUE #( BASE reported-travel (  TravelId = <fs_travel>-TravelId
                                                              %element-customerid = if_abap_behv=>mk-on
+                                                             %is_draft = <fs_travel>-%is_draft
                                                              %msg = new_message_with_text(
                                                                      severity = if_abap_behv_message=>severity-error
                                                                      text     = 'Enter a valid Customer ID'
                                                                    ) ) ).
           failed-travel = VALUE #( BASE failed-travel ( TravelId = <fs_travel>-TravelId
+                                                        %is_draft = <fs_travel>-%is_draft
                                                         %fail =  VALUE #( cause = if_abap_behv=>cause-not_found )  ) ).
         ELSEIF <fs_travel>-EndDate LT <fs_travel>-BeginDate.
           reported-travel = VALUE #( BASE reported-travel (  TravelId = <fs_travel>-TravelId
                                                              %element-enddate = if_abap_behv=>mk-on
+                                                             %is_draft = <fs_travel>-%is_draft
                                                              %msg = new_message_with_text(
                                                                      severity = if_abap_behv_message=>severity-error
                                                                      text     = 'The End Date cannot be less than the Begin Date'
                                                                    ) ) ).
           failed-travel = VALUE #( BASE failed-travel ( TravelId = <fs_travel>-TravelId
+                                                        %is_draft = <fs_travel>-%is_draft
                                                         %fail =  VALUE #( cause = if_abap_behv=>cause-conflict )  ) ).
         ELSEIF <fs_travel>-BeginDate LT cl_abap_context_info=>get_system_date( ).
           reported-travel = VALUE #( BASE reported-travel (  TravelId = <fs_travel>-TravelId
                                                              %element-begindate = if_abap_behv=>mk-on
-                                                               %msg = new_message_with_text(
+                                                             %is_draft = <fs_travel>-%is_draft
+                                                             %msg = new_message_with_text(
                                                                        severity = if_abap_behv_message=>severity-error
                                                                        text     = |The Begin Date can't be in the past|
                                                                      ) ) ).
           failed-travel = VALUE #( BASE failed-travel ( TravelId = <fs_travel>-TravelId
+                                                        %is_draft = <fs_travel>-%is_draft
                                                         %fail =  VALUE #( cause = if_abap_behv=>cause-conflict )  ) ).
         ENDIF.
       ENDLOOP.

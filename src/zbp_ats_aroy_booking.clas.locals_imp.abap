@@ -23,7 +23,8 @@ CLASS lhc_booking IMPLEMENTATION.
       ENTITY Booking BY \_BookingSupplement
       ALL FIELDS WITH
       VALUE #( ( TravelId = <fs_entities>-TravelId
-                 BookingId = <fs_entities>-BookingId ) )
+                 BookingId = <fs_entities>-BookingId
+                 %is_draft = <fs_entities>-%is_draft ) )
       RESULT DATA(lt_result)
       REPORTED DATA(lt_reported)
       FAILED DATA(lt_failed).
@@ -40,6 +41,7 @@ CLASS lhc_booking IMPLEMENTATION.
         lv_book_suppl += 1.
         mapped-bookingsuppl = VALUE #( BASE mapped-bookingsuppl
                                        ( %cid = <fs_target>-%cid
+                                         %is_draft = <fs_target>-%is_draft
                                          TravelId = <fs_target>-TravelId
                                          BookingId = <fs_target>-BookingId
                                          BookingSupplementId = lv_book_suppl ) ).
