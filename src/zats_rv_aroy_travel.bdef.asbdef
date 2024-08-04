@@ -13,8 +13,8 @@ authorization master ( instance )
 with additional save
 etag master LastChangedAt
 {
-  create;
-  update;
+  create ( precheck );
+  update ( precheck );
   delete;
 
   association _Booking { create ( features : instance ); with draft; }

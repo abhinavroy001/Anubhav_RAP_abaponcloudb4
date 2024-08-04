@@ -41,6 +41,11 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR travel~calculatetotalprice.
     METHODS validateheaderdata FOR VALIDATE ON SAVE
       IMPORTING keys FOR travel~validateheaderdata.
+    METHODS precheck_create FOR PRECHECK
+      IMPORTING entities FOR CREATE travel.
+
+    METHODS precheck_update FOR PRECHECK
+      IMPORTING entities FOR UPDATE travel.
     METHODS earlynumbering_create FOR NUMBERING
       IMPORTING entities FOR CREATE travel.
 
@@ -473,6 +478,92 @@ CLASS lhc_Travel IMPLEMENTATION.
         ENDIF.
       ENDLOOP.
     ENDIF.
+
+  ENDMETHOD.
+
+  METHOD precheck_create.
+
+    TYPES: BEGIN OF ty_customerid,
+             customerid TYPE /dmo/customer_id,
+           END OF ty_customerid,
+
+           BEGIN OF ty_agencyid,
+             agencyid TYPE /dmo/agency_id,
+           END OF ty_agencyid.
+
+    DATA: lt_entities   TYPE TABLE FOR CREATE zats_rv_aroy_travel\\travel,
+          lt_customerid TYPE STANDARD TABLE OF ty_customerid WITH DEFAULT KEY,
+          lt_agencyid   TYPE STANDARD TABLE OF ty_agencyid WITH DEFAULT KEY.
+
+
+  ENDMETHOD.
+
+  METHOD precheck_update.
+
+    TYPES: BEGIN OF ty_customerid,
+             customerid TYPE /dmo/customer_id,
+           END OF ty_customerid,
+
+           BEGIN OF ty_agencyid,
+             agencyid TYPE /dmo/agency_id,
+           END OF ty_agencyid.
+
+    DATA: lt_entities   TYPE TABLE FOR UPDATE zats_rv_aroy_travel\\travel,
+          lt_customerid TYPE STANDARD TABLE OF ty_customerid WITH DEFAULT KEY,
+          lt_agencyid   TYPE STANDARD TABLE OF ty_agencyid WITH DEFAULT KEY.
+
+    CLEAR: lt_entities[],
+           lt_customerid[],
+           lt_agencyid[].
+
+*    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+*    ENTITY Travel
+*    ALL FIELDS
+*    WITH CORRESPONDING #( entities )
+*    RESULT DATA(lt_result)
+*    FAILED DATA(lt_failed)
+*    REPORTED DATA(lt_reported).
+
+*    IF lt_result IS NOT INITIAL.
+    lt_customerid = CORRESPONDING #( entities MAPPING customerid = CustomerId ).
+    IF lt_customerid IS NOT INITIAL.
+      SORT lt_customerid BY customerid.
+      DELETE ADJACENT DUPLICATES FROM lt_customerid COMPARING customerid.
+    ENDIF.
+    lt_agencyid = CORRESPONDING #( entities MAPPING agencyid = AgencyId ).
+    IF lt_agencyid IS NOT INITIAL.
+      SORT lt_agencyid BY agencyid.
+      DELETE ADJACENT DUPLICATES FROM lt_agencyid COMPARING agencyid.
+    ENDIF.
+
+    SELECT
+    FROM /dmo/customer AS _cust
+    INNER JOIN @lt_customerid AS _inp
+    ON _inp~customerid = _cust~customer_id
+    FIELDS
+    _inp~customerid
+    INTO TABLE @DATA(lt_cust_valid).
+
+    IF sy-subrc IS INITIAL.
+*/--Do Nothing
+    ENDIF.
+
+    LOOP AT entities ASSIGNING FIELD-SYMBOL(<fs_entity>).
+      IF NOT line_exists( lt_cust_valid[ customerid = <fs_entity>-CustomerId ] ).
+        failed-travel = VALUE #( BASE failed-travel ( %cid = <fs_entity>-%cid_ref
+                                                      %is_draft = <fs_entity>-%is_draft
+                                                      TravelId = <fs_entity>-TravelId
+                                                      %fail-cause = if_abap_behv=>cause-not_found ) ).
+        reported-travel = VALUE #( BASE reported-travel ( %cid = <fs_entity>-%cid_ref
+                                                          %msg = new_message_with_text(
+                                                                   severity = if_abap_behv_message=>severity-error
+                                                                   text     = 'Customer ID is invalid'
+                                                                 )
+                                                          %element-customerid = if_abap_behv=>mk-on ) ).
+      ENDIF.
+    ENDLOOP.
+
+*    ENDIF.
 
   ENDMETHOD.
 
