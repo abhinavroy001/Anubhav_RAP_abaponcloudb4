@@ -2,8 +2,9 @@ projection;
 strict ( 2 );
 use draft;
 define behavior for ZATS_CV_AROY_TRAVEL alias Travel
+implementation in class zbp_ats_aroy_travel_pl unique
 {
-  use create;
+  use create ( augment );
   use update;
   use delete;
 

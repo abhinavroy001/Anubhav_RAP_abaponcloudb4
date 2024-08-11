@@ -26,6 +26,12 @@ CLASS lsc_zats_rv_aroy_travel IMPLEMENTATION.
 ENDCLASS.
 
 CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
+  PUBLIC SECTION.
+    TYPES: tt_failed     TYPE RESPONSE FOR FAILED EARLY zats_rv_aroy_travel,
+           tt_reported   TYPE RESPONSE FOR REPORTED EARLY zats_rv_aroy_travel,
+           tt_entities_u TYPE TABLE FOR UPDATE zats_rv_aroy_travel\\travel,
+           tt_entities_c TYPE TABLE FOR CREATE zats_rv_aroy_travel\\travel.
+
   PRIVATE SECTION.
 
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
@@ -51,6 +57,14 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS earlynumbering_cba_booking FOR NUMBERING
       IMPORTING entities FOR CREATE travel\_booking.
+
+    METHODS precheck_reuse
+      IMPORTING
+        it_entities_c TYPE tt_entities_c OPTIONAL
+        it_entities_u TYPE tt_entities_u OPTIONAL
+      EXPORTING
+        et_failed     TYPE tt_failed
+        et_reported   TYPE tt_reported.
 
 ENDCLASS.
 
@@ -483,38 +497,38 @@ CLASS lhc_Travel IMPLEMENTATION.
 
   METHOD precheck_create.
 
-    TYPES: BEGIN OF ty_customerid,
-             customerid TYPE /dmo/customer_id,
-           END OF ty_customerid,
+*    TYPES: BEGIN OF ty_customerid,
+*             customerid TYPE /dmo/customer_id,
+*           END OF ty_customerid,
+*
+*           BEGIN OF ty_agencyid,
+*             agencyid TYPE /dmo/agency_id,
+*           END OF ty_agencyid.
+*
+*    DATA: lt_entities   TYPE TABLE FOR CREATE zats_rv_aroy_travel\\travel,
+*          lt_customerid TYPE STANDARD TABLE OF ty_customerid WITH DEFAULT KEY,
+*          lt_agencyid   TYPE STANDARD TABLE OF ty_agencyid WITH DEFAULT KEY.
 
-           BEGIN OF ty_agencyid,
-             agencyid TYPE /dmo/agency_id,
-           END OF ty_agencyid.
-
-    DATA: lt_entities   TYPE TABLE FOR CREATE zats_rv_aroy_travel\\travel,
-          lt_customerid TYPE STANDARD TABLE OF ty_customerid WITH DEFAULT KEY,
-          lt_agencyid   TYPE STANDARD TABLE OF ty_agencyid WITH DEFAULT KEY.
+    precheck_reuse(
+      EXPORTING
+        it_entities_c = entities
+      IMPORTING
+        et_failed     = failed
+        et_reported   = reported
+    ).
 
 
   ENDMETHOD.
 
   METHOD precheck_update.
 
-    TYPES: BEGIN OF ty_customerid,
-             customerid TYPE /dmo/customer_id,
-           END OF ty_customerid,
-
-           BEGIN OF ty_agencyid,
-             agencyid TYPE /dmo/agency_id,
-           END OF ty_agencyid.
-
-    DATA: lt_entities   TYPE TABLE FOR UPDATE zats_rv_aroy_travel\\travel,
-          lt_customerid TYPE STANDARD TABLE OF ty_customerid WITH DEFAULT KEY,
-          lt_agencyid   TYPE STANDARD TABLE OF ty_agencyid WITH DEFAULT KEY.
-
-    CLEAR: lt_entities[],
-           lt_customerid[],
-           lt_agencyid[].
+*    DATA: lt_entities   TYPE TABLE FOR UPDATE zats_rv_aroy_travel\\travel,
+*          lt_customerid TYPE STANDARD TABLE OF ty_customerid WITH DEFAULT KEY,
+*          lt_agencyid   TYPE STANDARD TABLE OF ty_agencyid WITH DEFAULT KEY.
+*
+*    CLEAR: lt_entities[],
+*           lt_customerid[],
+*           lt_agencyid[].
 
 *    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
 *    ENTITY Travel
@@ -525,45 +539,204 @@ CLASS lhc_Travel IMPLEMENTATION.
 *    REPORTED DATA(lt_reported).
 
 *    IF lt_result IS NOT INITIAL.
-    lt_customerid = CORRESPONDING #( entities MAPPING customerid = CustomerId ).
-    IF lt_customerid IS NOT INITIAL.
-      SORT lt_customerid BY customerid.
-      DELETE ADJACENT DUPLICATES FROM lt_customerid COMPARING customerid.
-    ENDIF.
-    lt_agencyid = CORRESPONDING #( entities MAPPING agencyid = AgencyId ).
-    IF lt_agencyid IS NOT INITIAL.
-      SORT lt_agencyid BY agencyid.
-      DELETE ADJACENT DUPLICATES FROM lt_agencyid COMPARING agencyid.
-    ENDIF.
+*    lt_customerid = CORRESPONDING #( entities MAPPING customerid = CustomerId ).
+*    IF lt_customerid IS NOT INITIAL.
+*      SORT lt_customerid BY customerid.
+*      DELETE ADJACENT DUPLICATES FROM lt_customerid COMPARING customerid.
+*    ENDIF.
+*    lt_agencyid = CORRESPONDING #( entities MAPPING agencyid = AgencyId ).
+*    IF lt_agencyid IS NOT INITIAL.
+*      SORT lt_agencyid BY agencyid.
+*      DELETE ADJACENT DUPLICATES FROM lt_agencyid COMPARING agencyid.
+*    ENDIF.
+*
+*    SELECT
+*    FROM /dmo/customer AS _cust
+*    INNER JOIN @lt_customerid AS _inp
+*    ON _inp~customerid = _cust~customer_id
+*    FIELDS
+*    _inp~customerid
+*    INTO TABLE @DATA(lt_cust_valid).
+*
+*    IF sy-subrc IS INITIAL.
+**/--Do Nothing
+*    ENDIF.
 
-    SELECT
-    FROM /dmo/customer AS _cust
-    INNER JOIN @lt_customerid AS _inp
-    ON _inp~customerid = _cust~customer_id
-    FIELDS
-    _inp~customerid
-    INTO TABLE @DATA(lt_cust_valid).
-
-    IF sy-subrc IS INITIAL.
-*/--Do Nothing
-    ENDIF.
-
-    LOOP AT entities ASSIGNING FIELD-SYMBOL(<fs_entity>).
-      IF NOT line_exists( lt_cust_valid[ customerid = <fs_entity>-CustomerId ] ).
-        failed-travel = VALUE #( BASE failed-travel ( %cid = <fs_entity>-%cid_ref
-                                                      %is_draft = <fs_entity>-%is_draft
-                                                      TravelId = <fs_entity>-TravelId
-                                                      %fail-cause = if_abap_behv=>cause-not_found ) ).
-        reported-travel = VALUE #( BASE reported-travel ( %cid = <fs_entity>-%cid_ref
-                                                          %msg = new_message_with_text(
-                                                                   severity = if_abap_behv_message=>severity-error
-                                                                   text     = 'Customer ID is invalid'
-                                                                 )
-                                                          %element-customerid = if_abap_behv=>mk-on ) ).
-      ENDIF.
-    ENDLOOP.
+*    LOOP AT entities ASSIGNING FIELD-SYMBOL(<fs_entity>).
+*      IF NOT line_exists( lt_cust_valid[ customerid = <fs_entity>-CustomerId ] ).
+*        failed-travel = VALUE #( BASE failed-travel ( %cid = <fs_entity>-%cid_ref
+*                                                      %is_draft = <fs_entity>-%is_draft
+*                                                      TravelId = <fs_entity>-TravelId
+*                                                      %fail-cause = if_abap_behv=>cause-not_found ) ).
+*        reported-travel = VALUE #( BASE reported-travel ( %cid = <fs_entity>-%cid_ref
+*                                                          %msg = new_message_with_text(
+*                                                                   severity = if_abap_behv_message=>severity-error
+*                                                                   text     = 'Customer ID is invalid'
+*                                                                 )
+*                                                          %element-customerid = if_abap_behv=>mk-on ) ).
+*      ENDIF.
+*    ENDLOOP.
 
 *    ENDIF.
+
+    precheck_reuse(
+      EXPORTING
+        it_entities_u = entities
+      IMPORTING
+        et_failed     = failed
+        et_reported   = reported
+    ).
+
+  ENDMETHOD.
+
+  METHOD precheck_reuse.
+
+    TYPES: BEGIN OF ty_customerid,
+             customerid TYPE /dmo/customer_id,
+           END OF ty_customerid,
+
+           BEGIN OF ty_agencyid,
+             agencyid TYPE /dmo/agency_id,
+           END OF ty_agencyid.
+
+    DATA: lr_customerid TYPE RANGE OF /dmo/customer_id,
+          lr_agencyid   TYPE RANGE OF /dmo/agency_id.
+
+    CLEAR: lr_agencyid[],
+           lr_customerid[].
+
+
+    IF it_entities_c IS NOT INITIAL.
+      DATA(lt_entities_c) = CORRESPONDING lhc_travel=>tt_entities_c( it_entities_c ).
+      DELETE lt_entities_c WHERE %control-AgencyId EQ if_abap_behv=>mk-off AND
+                                 %control-CustomerId EQ if_abap_behv=>mk-off.
+      IF lt_entities_c IS NOT INITIAL.
+        lr_agencyid = CORRESPONDING #( lt_entities_c MAPPING low = AgencyId EXCEPT * ).
+        LOOP AT lr_agencyid ASSIGNING FIELD-SYMBOL(<fs_agency>).
+          <fs_agency>-sign = 'I'.
+          <fs_agency>-option = 'EQ'.
+        ENDLOOP.
+        SORT lr_agencyid BY low.
+        DELETE ADJACENT DUPLICATES FROM lr_agencyid COMPARING low.
+
+        lr_customerid = CORRESPONDING #( lt_entities_c MAPPING low = CustomerId EXCEPT * ).
+        LOOP AT lr_customerid ASSIGNING FIELD-SYMBOL(<fs_customer>).
+          <fs_customer>-sign = 'I'.
+          <fs_customer>-option = 'EQ'.
+        ENDLOOP.
+        SORT lr_customerid BY low.
+        DELETE ADJACENT DUPLICATES FROM lr_customerid COMPARING low.
+
+
+        SELECT
+        FROM /dmo/agency AS _dbagency
+        INNER JOIN @lr_agencyid AS _agencyid
+        ON _agencyid~low = _dbagency~agency_id
+        FIELDS
+        _dbagency~agency_id,
+        _dbagency~country_code
+        INTO TABLE @DATA(lt_agency_validation).
+        IF sy-subrc IS INITIAL.
+
+        ENDIF.
+
+        SELECT
+        FROM /dmo/customer AS _dbcustomer
+        INNER JOIN @lr_customerid AS _customerid
+        ON _customerid~low = _dbcustomer~customer_id
+        FIELDS
+        _dbcustomer~customer_id,
+        _dbcustomer~country_code
+        INTO TABLE @DATA(lt_customer_validation).
+        IF sy-subrc IS INITIAL.
+
+        ENDIF.
+
+        LOOP AT lt_entities_c ASSIGNING FIELD-SYMBOL(<fs_ent>).
+          IF VALUE #( lt_agency_validation[ agency_id = <fs_ent>-AgencyId ]-country_code OPTIONAL ) NE
+             VALUE #( lt_customer_validation[ customer_id = <fs_ent>-CustomerId ]-country_code OPTIONAL ).
+            et_failed-travel = VALUE #( BASE et_failed-travel ( %cid = <fs_ent>-%cid
+                                                                %is_draft = <fs_ent>-%is_draft
+                                                                %fail = VALUE #( cause = if_abap_behv=>cause-conflict ) ) ).
+            et_reported-travel = VALUE #( BASE et_reported-travel ( %cid = <fs_ent>-%cid
+                                                                    %is_draft = <fs_ent>-%is_draft
+                                                                    %msg = new_message_with_text(
+                                                                             severity = if_abap_behv_message=>severity-error
+                                                                             text     = 'Country code is different for Agency ID & Customer ID'
+                                                                           )
+                                                                    %element-agencyid = if_abap_behv=>mk-on
+                                                                    %element-customerid = if_abap_behv=>mk-on ) ).
+          ENDIF.
+        ENDLOOP.
+      ENDIF.
+
+    ELSEIF it_entities_u IS NOT INITIAL.
+      DATA(lt_entities_u) = CORRESPONDING lhc_travel=>tt_entities_u( it_entities_u ).
+      DELETE lt_entities_u WHERE %control-AgencyId EQ if_abap_behv=>mk-off AND
+                                 %control-CustomerId EQ if_abap_behv=>mk-off.
+      IF lt_entities_u IS NOT INITIAL.
+        lr_agencyid = CORRESPONDING #( lt_entities_u MAPPING low = AgencyId EXCEPT * ).
+        LOOP AT lr_agencyid ASSIGNING <fs_agency>.
+          <fs_agency>-sign = 'I'.
+          <fs_agency>-option = 'EQ'.
+        ENDLOOP.
+        SORT lr_agencyid BY low.
+        DELETE ADJACENT DUPLICATES FROM lr_agencyid COMPARING low.
+        lr_customerid = CORRESPONDING #( lt_entities_u MAPPING low = CustomerId EXCEPT * ).
+        LOOP AT lr_customerid ASSIGNING <fs_customer>.
+          <fs_customer>-sign = 'I'.
+          <fs_customer>-option = 'EQ'.
+        ENDLOOP.
+        SORT lr_customerid BY low.
+        DELETE ADJACENT DUPLICATES FROM lr_customerid COMPARING low.
+
+*/--Select valid Agencies
+        SELECT
+        FROM /dmo/agency AS _dbagency
+        INNER JOIN @lr_agencyid AS _agencyid
+        ON _agencyid~low = _dbagency~agency_id
+        FIELDS
+        _dbagency~agency_id,
+        _dbagency~country_code
+        INTO TABLE @lt_agency_validation.
+        IF sy-subrc IS INITIAL.
+
+        ENDIF.
+
+*/--Select valid Customers
+        SELECT
+        FROM /dmo/customer AS _dbcustomer
+        INNER JOIN @lr_customerid AS _customerid
+        ON _customerid~low = _dbcustomer~customer_id
+        FIELDS
+        _dbcustomer~customer_id,
+        _dbcustomer~country_code
+        INTO TABLE @lt_customer_validation.
+        IF sy-subrc IS INITIAL.
+
+        ENDIF.
+
+        LOOP AT lt_entities_u ASSIGNING FIELD-SYMBOL(<fs_ent_u>).
+          IF VALUE #( lt_agency_validation[ agency_id = <fs_ent_u>-AgencyId ]-country_code OPTIONAL ) NE
+             VALUE #( lt_customer_validation[ customer_id = <fs_ent_u>-CustomerId ]-country_code OPTIONAL ).
+            et_failed-travel = VALUE #( BASE et_failed-travel ( %cid = <fs_ent_u>-%cid_ref
+                                                                TravelId = <fs_ent_u>-TravelId
+                                                                %is_draft = <fs_ent_u>-%is_draft
+                                                                %fail = VALUE #( cause = if_abap_behv=>cause-conflict ) ) ).
+            et_reported-travel = VALUE #( BASE et_reported-travel ( %cid = <fs_ent_u>-%cid_ref
+                                                                    %is_draft = <fs_ent_u>-%is_draft
+                                                                    TravelId = <fs_ent_u>-TravelId
+                                                                    %msg = new_message_with_text(
+                                                                             severity = if_abap_behv_message=>severity-error
+                                                                             text     = 'Country code is different for Agency ID & Customer ID'
+                                                                           )
+                                                                    %element-agencyid = if_abap_behv=>mk-on
+                                                                    %element-customerid = if_abap_behv=>mk-on ) ).
+          ENDIF.
+        ENDLOOP.
+      ENDIF.
+    ENDIF.
+
 
   ENDMETHOD.
 

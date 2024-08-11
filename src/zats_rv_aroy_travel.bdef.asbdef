@@ -83,7 +83,10 @@ etag master LastChangedAt
 
   determination calculateTotalPrice on modify { field FlightPrice, CurrencyCode; }
 
-  side effects { field FlightPrice affects field _Travel.TotalPrice; }
+  side effects
+  {
+    field FlightPrice affects field _Travel.TotalPrice;
+  }
 
   mapping for /dmo/booking_m
     {
