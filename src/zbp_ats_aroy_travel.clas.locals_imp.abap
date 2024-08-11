@@ -333,7 +333,7 @@ CLASS lhc_Travel IMPLEMENTATION.
     FAILED DATA(lt_failed_bookspl).
 
     LOOP AT lt_travel ASSIGNING FIELD-SYMBOL(<fs_travel>).
-
+      CLEAR: <fs_travel>-TotalPrice.
       <fs_travel>-TotalPrice += <fs_travel>-BookingFee.
 
       LOOP AT lt_booking ASSIGNING FIELD-SYMBOL(<fs_booking>) WHERE TravelId = <fs_travel>-TravelId AND
