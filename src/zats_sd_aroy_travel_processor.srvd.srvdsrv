@@ -1,0 +1,10 @@
+@EndUserText.label: 'Service Definition for the Travel'
+define service ZATS_SD_AROY_TRAVEL_PROCESSOR {
+  expose ZATS_CV_AROY_TRAVEL_Processor;
+  expose ZATS_CV_AROY_BOOKING_Processor;
+  expose /DMO/I_Agency;
+  expose /DMO/I_Customer;
+  expose /DMO/I_Overall_Status_VH;
+  expose /DMO/I_Carrier;
+  expose /DMO/I_Connection;
+}

@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zats_cl_eml_aroy IMPLEMENTATION.
+CLASS ZATS_CL_EML_AROY IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.

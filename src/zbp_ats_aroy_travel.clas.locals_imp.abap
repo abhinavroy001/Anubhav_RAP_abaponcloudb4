@@ -52,6 +52,11 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS precheck_update FOR PRECHECK
       IMPORTING entities FOR UPDATE travel.
+    METHODS acceptrequest FOR MODIFY
+      IMPORTING keys FOR ACTION travel~acceptrequest RESULT result.
+
+    METHODS rejectrequest FOR MODIFY
+      IMPORTING keys FOR ACTION travel~rejectrequest RESULT result.
     METHODS earlynumbering_create FOR NUMBERING
       IMPORTING entities FOR CREATE travel.
 
@@ -738,6 +743,81 @@ CLASS lhc_Travel IMPLEMENTATION.
     ENDIF.
 
 
+  ENDMETHOD.
+
+  METHOD AcceptRequest.
+    DATA: lt_result_m   TYPE TABLE FOR ACTION RESULT zats_rv_aroy_travel\\travel~acceptrequest,
+          lt_mapped_m   TYPE RESPONSE FOR MAPPED EARLY zats_rv_aroy_travel,
+          lt_failed_m   TYPE RESPONSE FOR FAILED EARLY zats_rv_aroy_travel,
+          lt_reported_m TYPE RESPONSE FOR REPORTED EARLY zats_rv_aroy_travel.
+
+    CLEAR: lt_result_m[],
+           lt_mapped_m,
+           lt_failed_m,
+           lt_reported_m.
+
+    MODIFY ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY travel
+    UPDATE
+    SET FIELDS WITH
+    VALUE #( FOR <fs_key> IN keys ( %cid_ref = <fs_key>-%cid_ref
+                                    %is_draft = <fs_key>-%is_draft
+                                    travelid = <fs_key>-TravelId
+                                    OverallStatus = 'A' ) )
+    MAPPED DATA(lt_mapped)
+    REPORTED DATA(lt_reported)
+    FAILED DATA(lt_failed).
+
+*    IF lt_mapped-travel IS NOT INITIAL.
+    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    ALL FIELDS WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result)
+    REPORTED lt_reported
+    FAILED lt_failed.
+
+    IF lt_result IS NOT INITIAL.
+      result = VALUE #( FOR <fs_result> IN lt_result ( %is_draft = <fs_result>-%is_draft
+                                                        travelid = <fs_result>-TravelId
+                                                        %param = CORRESPONDING #( <fs_result> )
+                                                  ) ).
+      reported = lt_reported.
+      failed = lt_failed.
+    ENDIF.
+
+*    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD RejectRequest.
+    MODIFY ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+      ENTITY travel
+      UPDATE
+      SET FIELDS WITH
+      VALUE #( FOR <fs_key> IN keys ( %cid_ref = <fs_key>-%cid_ref
+                                      %is_draft = <fs_key>-%is_draft
+                                      travelid = <fs_key>-TravelId
+                                      OverallStatus = 'R' ) )
+      MAPPED DATA(lt_mapped)
+      REPORTED DATA(lt_reported)
+      FAILED DATA(lt_failed).
+
+*    IF lt_mapped-travel IS NOT INITIAL.
+    READ ENTITIES OF zats_rv_aroy_travel IN LOCAL MODE
+    ENTITY Travel
+    ALL FIELDS WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result)
+    REPORTED lt_reported
+    FAILED lt_failed.
+
+    IF lt_result IS NOT INITIAL.
+      result = VALUE #( FOR <fs_result> IN lt_result ( %is_draft = <fs_result>-%is_draft
+                                                        travelid = <fs_result>-TravelId
+                                                        %param = CORRESPONDING #( <fs_result> )
+                                                  ) ).
+      reported = lt_reported.
+      failed = lt_failed.
+    ENDIF.
   ENDMETHOD.
 
 ENDCLASS.

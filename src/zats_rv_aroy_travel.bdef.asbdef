@@ -25,6 +25,9 @@ etag master LastChangedAt
 
   factory action copyTravel [1];
 
+  action AcceptRequest result [1] $self;
+  action RejectRequest result [1] $self;
+
   internal action reCalcTotalPrice;
 
   determination calculateTotalPrice on modify { create; field BookingFee, CurrencyCode; }
