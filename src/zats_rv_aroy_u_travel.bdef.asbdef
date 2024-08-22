@@ -1,0 +1,14 @@
+unmanaged implementation in class zbp_ats_rv_aroy_u_travel unique;
+strict ( 2 );
+
+define behavior for zats_rv_aroy_u_travel alias Travel
+//late numbering
+lock master
+authorization master ( instance )
+//etag master <field_name>
+{
+  create;
+  update;
+  delete;
+  field ( readonly ) TravelId;
+}
