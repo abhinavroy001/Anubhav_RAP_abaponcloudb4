@@ -5,10 +5,11 @@ define behavior for zats_rv_aroy_u_travel alias Travel
 //late numbering
 lock master
 authorization master ( instance )
-//etag master <field_name>
+etag master Lastchangedat
 {
   create;
   update;
   delete;
   field ( readonly ) TravelId;
+  field ( mandatory ) AgencyId, CustomerId, BeginDate, EndDate;
 }
