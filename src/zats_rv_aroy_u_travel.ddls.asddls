@@ -38,7 +38,22 @@ define root view entity zats_rv_aroy_u_travel
               element: 'TravelStatus'
           }
       }]
+      @ObjectModel.text.element: [ 'StatusText' ]
       status                                                          as Status,
+      case status
+        when 'B' then 'Booked'
+        when 'N' then 'New'
+        when 'P' then 'Planned'
+        when 'X' then 'Cancelled'
+        else 'Not Applicable'
+        end                                                           as StatusText,
+      case status
+          when 'B' then 2
+          when 'N' then 3
+          when 'P' then 1
+          when 'X' then 1
+          else 0
+          end                                                         as Criticality,
       createdby                                                       as Createdby,
       createdat                                                       as Createdat,
       lastchangedby                                                   as Lastchangedby,

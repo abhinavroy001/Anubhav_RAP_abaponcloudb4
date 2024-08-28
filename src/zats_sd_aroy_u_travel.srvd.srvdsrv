@@ -1,6 +1,6 @@
 @EndUserText.label: 'Service Definition for the Travel App (Unmanaged)'
 define service ZATS_SD_AROY_U_Travel {
-  expose zats_rv_aroy_u_travel;
+  expose ZATS_CV_AROY_U_TRAVEL;
   expose zats_iv_aroy_u_agency;
   expose zats_iv_aroy_u_customer;
   expose I_Currency;
