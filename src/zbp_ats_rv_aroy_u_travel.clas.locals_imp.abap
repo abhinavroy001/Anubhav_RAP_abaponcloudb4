@@ -49,7 +49,7 @@ CLASS lhc_Travel IMPLEMENTATION.
           et_messages = lt_messages.
 
       IF lt_messages IS INITIAL.
-        mapped-travel = VALUE #( BASE mapped-travel ( %cid = <fs_entities>-%cid TravelId = <fs_entities>-TravelId ) ).
+        mapped-travel = VALUE #( BASE mapped-travel ( %cid = <fs_entities>-%cid TravelId = ls_legacy_out-travel_id ) ).
       ELSE.
         failed-travel = VALUE #( BASE failed-travel ( %cid = <fs_entities>-%cid
                                                       TravelId = <fs_entities>-TravelId
@@ -68,6 +68,8 @@ CLASS lhc_Travel IMPLEMENTATION.
                                                                    ) ) ).
         ENDLOOP.
       ENDIF.
+      CLEAR: ls_legacy_in,
+             ls_legacy_out.
     ENDLOOP.
 
   ENDMETHOD.
@@ -165,7 +167,7 @@ CLASS lhc_Travel IMPLEMENTATION.
         result = VALUE #( BASE result ( CORRESPONDING #( ls_legacy_out MAPPING TO ENTITY ) ) ).
       ELSE.
         failed-travel = VALUE #( BASE failed-travel ( travelId = <fs_key>-TravelId
-                                                          %fail-cause = if_abap_behv=>cause-unspecific  ) ).
+                                                      %fail-cause = if_abap_behv=>cause-unspecific  ) ).
         LOOP AT lt_messages ASSIGNING FIELD-SYMBOL(<fs_msg>).
           reported-travel = VALUE #( BASE reported-travel ( TravelId = <fs_key>-TravelId
                                                             %msg = new_message(
