@@ -10,6 +10,8 @@ etag master Lastchangedat
   create;
   update;
   delete;
+  action ( features : instance ) statuschange result [1] $self;
+  static action createNewEntity;
   field ( readonly ) TravelId;
   field ( mandatory ) AgencyId, CustomerId, BeginDate, EndDate;
 

@@ -18,6 +18,14 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS lock FOR LOCK
       IMPORTING keys FOR LOCK Travel.
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      IMPORTING keys REQUEST requested_features FOR Travel RESULT result.
+
+    METHODS statuschange FOR MODIFY
+      IMPORTING keys FOR ACTION Travel~statuschange RESULT result.
+
+    METHODS createNewEntity FOR MODIFY
+      IMPORTING keys FOR ACTION Travel~createNewEntity.
 
 ENDCLASS.
 
@@ -185,6 +193,15 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD lock.
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+  ENDMETHOD.
+
+  METHOD statuschange.
+  ENDMETHOD.
+
+  METHOD createNewEntity.
   ENDMETHOD.
 
 ENDCLASS.
