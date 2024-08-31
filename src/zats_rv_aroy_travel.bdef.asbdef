@@ -18,6 +18,7 @@ etag master LastChangedAt
   delete;
 
   association _Booking { create ( features : instance ); with draft; }
+  association _attachment { create ( features : instance ); with draft; }
 
   //static feature control
   field ( readonly ) TravelId, CreatedAt, CreatedBy, LastChangedAt, LastChangedBy, TotalPrice;
@@ -104,6 +105,40 @@ etag master LastChangedAt
       LastChangedAt = last_changed_at;
       BookingDate   = booking_date;
       CustomerId    = customer_id;
+    }
+}
+
+
+define behavior for zats_iv_aroy_attachment alias Attachment
+implementation in class zbp_ats_aroy_attachment unique
+persistent table zats_aroy_attach
+lock dependent by _Travel
+authorization dependent by _Travel
+etag master LastChangedAt
+draft table zats_d_ar_attach
+{
+  update;
+  delete;
+  association _Travel { with draft; }
+
+  //Static feature control
+  field ( readonly ) TravelId, Id;
+  field ( numbering : managed ) Id;
+  field ( mandatory ) Attachment, Filename, Memo;
+
+
+  mapping for zats_aroy_attach
+    {
+      TravelId      = travel_id;
+      CreatedAt     = created_at;
+      CreatedBy     = created_by;
+      Filename      = filename;
+      Filetype      = filetype;
+      Id            = id;
+      LastChangedAt = last_changed_at;
+      LastChangedBy = last_changed_by;
+      Memo          = memo;
+      Attachment    = attachment;
     }
 }
 

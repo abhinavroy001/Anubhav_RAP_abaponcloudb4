@@ -1,0 +1,55 @@
+@Metadata.layer: #CORE
+@UI.headerInfo:{ typeName: 'Attachment',
+                 typeNamePlural: 'Attachments',
+                 title: { value: 'Memo' },
+                 description: { value: 'Filename' }
+               }
+annotate entity ZATS_CV_AROY_ATTACHMENT with
+{
+  @UI.facet: [
+                  {
+                      purpose: #STANDARD,
+                      type: #IDENTIFICATION_REFERENCE,
+                      label: 'Attachment Info',
+                      position: 10
+                   }
+      ]
+
+  @UI.selectionField: [{ position: 10 }]
+  @UI.lineItem: [{ position: 10 }]
+  @UI.identification: [{ position: 10 }]
+  @EndUserText.label: 'Travel ID'
+  TravelId;
+  @UI.selectionField: [{ position: 20 }]
+  @UI.lineItem: [{ position: 20 }]
+  @UI.identification: [{ position: 20 }]
+  @EndUserText.label: 'ID'
+  Id;
+  @UI.lineItem: [{ position: 30 }]
+  @UI.identification: [{ position: 30 }]
+  @EndUserText.label: 'Comments'
+  Memo;
+  @UI.lineItem: [{ position: 40 }]
+  @UI.identification: [{ position: 40 }]
+  @EndUserText.label: 'Attachment'
+  Attachment;
+  //  @UI.lineItem: [{ position: 50 }]
+  //  @UI.identification: [{ position: 50 }]
+  //  @EndUserText.label: 'File Type'
+  //  Filetype;
+  @UI.lineItem: [{ position: 60 }]
+  @UI.identification: [{ position: 60 }]
+  @EndUserText.label: 'File Name'
+  Filename;
+  @UI.identification: [{ position: 70 }]
+  @EndUserText.label: 'Created By'
+  CreatedBy;
+  @UI.identification: [{ position: 80 }]
+  @EndUserText.label: 'Created At'
+  CreatedAt;
+  @UI.hidden: true
+  LastChangedBy;
+  @UI.hidden: true
+  LastChangedAt;
+
+}

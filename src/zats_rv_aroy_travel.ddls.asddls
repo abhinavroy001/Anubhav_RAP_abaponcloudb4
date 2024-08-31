@@ -3,6 +3,7 @@
 define root view entity zats_rv_aroy_travel
   as select from /dmo/travel_m
   composition [0..*] of zats_iv_aroy_booking     as _Booking
+  composition[0..*] of zats_iv_aroy_attachment as _attachment
   association [0..1] to /DMO/I_Customer          as _Customer      on $projection.CustomerId = _Customer.CustomerID
   association [0..1] to /DMO/I_Agency            as _Agency        on $projection.AgencyId = _Agency.AgencyID
   association [0..1] to I_Currency               as _Currency      on $projection.CurrencyCode = _Currency.Currency
@@ -41,6 +42,7 @@ define root view entity zats_rv_aroy_travel
           when 'X' then 1
           end         as Criticality,
       _Booking,
+      _attachment,
       _Customer,
       _Agency,
       _Currency,

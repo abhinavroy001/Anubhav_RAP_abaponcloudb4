@@ -15,6 +15,7 @@ implementation in class zbp_ats_aroy_travel_pl unique
   use action Prepare;
 
   use association _Booking { create; with draft; }
+  use association _attachment { create; with draft; }
 
   use action copyTravel;
 }
@@ -26,6 +27,14 @@ define behavior for ZATS_CV_AROY_BOOKING alias Booking
 
   use association _Travel { with draft; }
   use association _BookingSupplement { create; with draft; }
+}
+
+define behavior for ZATS_CV_AROY_ATTACHMENT alias Attachment
+{
+  use update;
+  use delete;
+
+  use association _Travel { with draft; }
 }
 
 define behavior for ZATS_CV_AROY_BOOKING_SUPL alias BookingSuppl

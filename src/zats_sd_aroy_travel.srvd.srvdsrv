@@ -8,4 +8,5 @@ define service Zats_sd_aroy_travel {
   expose /DMO/I_Overall_Status_VH;
   expose /DMO/I_Carrier;
   expose /DMO/I_Connection;
+  expose ZATS_CV_AROY_ATTACHMENT;
 }

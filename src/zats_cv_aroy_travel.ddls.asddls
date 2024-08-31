@@ -35,7 +35,8 @@ define root view entity ZATS_CV_AROY_TRAVEL
       Criticality,
       /* Associations */
       _Agency,
-      _Booking : redirected to composition child ZATS_CV_AROY_BOOKING,
+      _Booking    : redirected to composition child ZATS_CV_AROY_BOOKING,
+      _attachment : redirected to composition child ZATS_CV_AROY_ATTACHMENT,
       _Currency,
       _Customer,
       _OverallStatus
