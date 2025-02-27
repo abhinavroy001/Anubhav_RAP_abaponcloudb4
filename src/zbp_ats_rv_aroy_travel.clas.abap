@@ -1,4 +1,8 @@
-CLASS zbp_ats_rv_aroy_travel DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zats_rv_aroy_travel.
+class ZBP_ATS_RV_AROY_TRAVEL definition
+  public
+  create private .
+
+public section.
 protected section.
 private section.
 ENDCLASS.

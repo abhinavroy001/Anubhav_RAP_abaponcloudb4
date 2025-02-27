@@ -1,5 +1,9 @@
 CLASS zbp_ats_aroy_attachment DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zats_rv_aroy_travel.
+protected section.
+private section.
 ENDCLASS.
 
-CLASS zbp_ats_aroy_attachment IMPLEMENTATION.
+
+
+CLASS ZBP_ATS_AROY_ATTACHMENT IMPLEMENTATION.
 ENDCLASS.
